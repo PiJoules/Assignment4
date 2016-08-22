@@ -53,6 +53,8 @@ tokens = (
     "NE",
     "LT",
     "GT",
+    "LTE",
+    "GTE",
     # End of stuff we added
 )
 
@@ -91,6 +93,8 @@ t_EQ = r"=="
 t_NE = r"!="
 t_LT = r"<"
 t_GT = r">"
+t_LTE = r"<="
+t_GTE = r">="
 # End of stuf we added
 
 def t_IDENT( t ):
@@ -129,8 +133,12 @@ import ply.yacc as yacc
 	# create a function for each production (note the prefix)
 	# The rule is given in the doc string
 
+# Be able to access the name table in this later
+P = None
+
 def p_program( p ) :
   'program : stmt_list'
+  global P
   P = Program( p[1] )
   #P.display()
   print 'Running Program'
@@ -242,6 +250,12 @@ def p_lt(p):
 def p_gt(p):
     "expr : expr GT expr"
     p[0] = GT(p[1], p[3])
+def p_lte(p):
+    "expr : expr LTE expr"
+    p[0] = LTE(p[1], p[3])
+def p_gte(p):
+    "expr : expr GTE expr"
+    p[0] = GTE(p[1], p[3])
 # End of stuff we added
 
 
@@ -296,9 +310,202 @@ def test_parser( arg=sys.argv ) :
 #	x := 5;
 #	sum( x )'''
 
-	data = sys.stdin.read()
+    """
+    Tests for Prob1 of PA4
+    """
+    # ==
+    data = """
+    x := 5;
+    if x == 5 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
 
-	yacc.parse( data )
+    data = """
+    x := 5;
+    if x == 6 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
+
+    # !=
+    data = """
+    x := 5;
+    if x != 5 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
+
+    data = """
+    x := 5;
+    if x != 6 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+
+    # <
+    data = """
+    x := 5;
+    if x < 6 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+    data = """
+    x := 5;
+    if 6 < x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
+
+
+    # >
+    data = """
+    x := 5;
+    if x > 6 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
+
+    data = """
+    x := 5;
+    if 6 > x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+
+    # <=
+    data = """
+    x := 5;
+    if x <= 6 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+    data = """
+    x := 5;
+    if 6 <= x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
+
+
+    data = """
+    x := 5;
+    if x <= 5 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+    data = """
+    x := 5;
+    if 5 <= x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+
+    # >=
+    data = """
+    x := 5;
+    if x >= 6 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
+
+    data = """
+    x := 5;
+    if 6 >= x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+
+    data = """
+    x := 5;
+    if x >= 5 then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+    data = """
+    x := 5;
+    if 5 >= x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 1
+
+
+    # Regular parse form stdin
+    print "\nAll tests passed.\n"
+    data = sys.stdin.read()
+    yacc.parse( data )
 
 
 if __name__ == '__main__' :

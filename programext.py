@@ -128,25 +128,29 @@ class TwoSidedExpr(Expr):
         self.lhs = lhs
         self.rhs = rhs
 
-
 class Eq(TwoSidedExpr):
     def eval(self, nt, ft):
         return self.lhs.eval(nt, ft) == self.rhs.eval(nt, ft)
-
 
 class Ne(TwoSidedExpr):
     def eval(self, nt, ft):
         return self.lhs.eval(nt, ft) != self.rhs.eval(nt, ft)
 
-
 class LT(TwoSidedExpr):
     def eval(self, nt, ft):
         return self.lhs.eval(nt, ft) < self.rhs.eval(nt, ft)
 
-
 class GT(TwoSidedExpr):
     def eval(self, nt, ft):
         return self.lhs.eval(nt, ft) > self.rhs.eval(nt, ft)
+
+class LTE(TwoSidedExpr):
+    def eval(self, nt, ft):
+        return self.lhs.eval(nt, ft) <= self.rhs.eval(nt, ft)
+
+class GTE(TwoSidedExpr):
+    def eval(self, nt, ft):
+        return self.lhs.eval(nt, ft) >= self.rhs.eval(nt, ft)
 # End of stuff we added
 
 
