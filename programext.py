@@ -77,16 +77,24 @@ class Expr :
 			'Expr.display: virtual method.  Must be overridden.' )
 
 class Number( Expr ) :
-	'''Just integers'''
+    '''Just integers'''
 
-	def __init__( self, v=0 ) :
-		self.value = v
+    def __init__( self, v=0 ) :
+        self.value = v
 
-	def eval( self, nt, ft ) :
-		return self.value
+    def eval( self, nt, ft ) :
+        return self.value
 
-	def display( self, nt, ft, depth=0 ) :
-		print "%s%i" % (tabstop*depth, self.value)
+    def display( self, nt, ft, depth=0 ) :
+        print "%s%i" % (tabstop*depth, self.value)
+
+    def __str__(self):
+        return str(self.value)
+
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return self.value == other
+        return self.value  == other.value
 
 class Ident( Expr ) :
 	'''Stores the symbol'''
@@ -151,6 +159,43 @@ class LTE(TwoSidedExpr):
 class GTE(TwoSidedExpr):
     def eval(self, nt, ft):
         return self.lhs.eval(nt, ft) >= self.rhs.eval(nt, ft)
+
+class ListImpl(Expr):
+    def __init__(self, buff=None):
+        self.__buff = buff or []
+
+    def eval(self, nt, ft):
+        return self.__buff
+
+    def value(self):
+        return self.__buff
+
+    def insert(self, x):
+        self.__buff.insert(0, x)
+
+class ListCar(Expr):
+    def __init__(self, lst):
+        self.value = lst
+
+    def eval(self, nt, ft):
+        return self.value.eval(nt, ft)[0]
+
+class ListCdr(Expr):
+    def __init__(self, lst):
+        self.value = lst
+
+    def eval(self, nt, ft):
+        return self.value.eval(nt, ft)[1:]
+
+class ListCons(Expr):
+    def __init__(self, x, lst):
+        self.value = lst
+        self.x = x
+
+    def eval(self, nt, ft):
+        lst = self.value.eval(nt, ft)
+        x = self.x.eval(nt, ft)
+        return ListImpl(buff=[x] + lst).eval(nt, ft)
 # End of stuff we added
 
 
@@ -228,20 +273,20 @@ class Stmt :
 
 
 class AssignStmt( Stmt ) :
-	'''adds/modifies symbol in the current context'''
+    '''adds/modifies symbol in the current context'''
 
-	def __init__( self, name, rhs ) :
-		'''stores the symbol for the l-val, and the expressions which is the
-		rhs'''
-		self.name = name
-		self.rhs = rhs
+    def __init__( self, name, rhs ) :
+        '''stores the symbol for the l-val, and the expressions which is the
+        rhs'''
+        self.name = name
+        self.rhs = rhs
 
-	def eval( self, nt, ft ) :
-		nt[ self.name ] = self.rhs.eval( nt, ft )
+    def eval( self, nt, ft ) :
+        nt[ self.name ] = self.rhs.eval( nt, ft )
 
-	def display( self, nt, ft, depth=0 ) :
-		print "%sAssign: %s :=" % (tabstop*depth, self.name)
-		self.rhs.display( nt, ft, depth+1 )
+    def display( self, nt, ft, depth=0 ) :
+        print "%sAssign: %s :=" % (tabstop*depth, self.name)
+        self.rhs.display( nt, ft, depth+1 )
 
 
 class DefineStmt( Stmt ) :

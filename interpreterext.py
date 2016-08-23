@@ -55,6 +55,11 @@ tokens = (
     "GT",
     "LTE",
     "GTE",
+    "LBRACKET",
+    "RBRACKET",
+    "CAR",
+    "CDR",
+    "CONS",
     # End of stuff we added
 )
 
@@ -69,7 +74,12 @@ reserved = {
 		'fi'		: 'FI',
 		'define': 'DEFINE',
 		'proc'	: 'PROC',
-		'end'		: 'END'
+		'end'		: 'END',
+
+        # Stuff we added
+        "car": "CAR",
+        "cdr": "CDR",
+        "cons": "CONS",
 		}
 
 # Now, this section.  We have a mapping, REs to token types (please note
@@ -95,6 +105,8 @@ t_LT = r"<"
 t_GT = r">"
 t_LTE = r"<="
 t_GTE = r">="
+t_LBRACKET = r"\["
+t_RBRACKET = r"\]"
 # End of stuf we added
 
 def t_IDENT( t ):
@@ -256,6 +268,31 @@ def p_lte(p):
 def p_gte(p):
     "expr : expr GTE expr"
     p[0] = GTE(p[1], p[3])
+def p_list(p):
+    """expr : LBRACKET RBRACKET
+        | LBRACKET list_content RBRACKET"""
+    if len(p) == 3:
+        p[0] = ListImpl()
+    else:
+        p[0] = p[2]
+def p_list_content(p):
+    """list_content : expr COMMA list_content
+        | expr"""
+    if len( p ) == 2 :  # single element => new list
+        p[0] = ListImpl()
+        p[0].insert( p[1] )
+    else :  # we have a list, keep adding to front
+        p[3].insert( p[1] )
+        p[0] = p[3]
+def p_car(p):
+    "expr : CAR LPAREN expr RPAREN"
+    p[0] = ListCar(p[3])
+def p_cdr(p):
+    "expr : CDR LPAREN expr RPAREN"
+    p[0] = ListCdr(p[3])
+def p_cons(p):
+    "expr : CONS LPAREN expr COMMA expr RPAREN"
+    p[0] = ListCons(p[3], p[5])
 # End of stuff we added
 
 
@@ -284,32 +321,6 @@ def test_scanner( arg=sys.argv ) :
 
 
 def test_parser( arg=sys.argv ) :
-
-	#data = ( '2', '232', '98237492' )
-	#data = [ '2+4', '2-4', '2*37' ]
-	#data.extend( [ 'x', 'foo', 'sof' ] )
-	#data = '''x:=3; s:=0; while x do s := s+x ; x := x-1 od'''
-	#data = '''x := 12;
-	#	if x then
-	#		y := 13
-	#	else
-	#		y := 0
-	#	fi'''
-
-	#data = 'if 5 then x := 13 else x:=0 fi'
-
-#	data = '''
-#	define sum ( i )
-#	proc
-#	  return := 0;
-#		while i do
-#			return := return + i;
-#			i := i - 1
-#		od
-#	done;
-#	x := 5;
-#	sum( x )'''
-
     """
     Tests for Prob1 of PA4
     """
@@ -500,6 +511,58 @@ def test_parser( arg=sys.argv ) :
     """
     yacc.parse( data )
     assert P.nameTable["s"] == 1
+
+
+    # List
+    data = """
+    x := [8, 2, 3]
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == [8, 2, 3]
+
+    data = """
+    x := [8, 2, 3];
+    x := car(x)
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == 8
+
+    data = """
+    x := car([3])
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == 3
+
+    data = """
+    x := cdr([8, 2, 3])
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == [2, 3]
+
+    data = """
+    x := [8, 2, 3];
+    x := cdr(x)
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == [2, 3]
+
+    data = """
+    x := [8, 2, 3];
+    x := cons(1, x)
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == [1, 8, 2, 3]
+
+    data = """
+    x := cons(10, []);
+    x := cons(2, x);
+    y := cdr(x);
+    z := car(y)
+    """
+    yacc.parse( data )
+    assert P.nameTable["x"] == [2, 10]
+    assert P.nameTable["y"] == [10]
+    assert P.nameTable["z"] == 10
 
 
     # Regular parse form stdin
