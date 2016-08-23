@@ -60,6 +60,8 @@ tokens = (
     "CAR",
     "CDR",
     "CONS",
+    "ISNULL",
+    "QMARK",
     # End of stuff we added
 )
 
@@ -80,6 +82,7 @@ reserved = {
         "car": "CAR",
         "cdr": "CDR",
         "cons": "CONS",
+        "null": "ISNULL",
 		}
 
 # Now, this section.  We have a mapping, REs to token types (please note
@@ -107,6 +110,7 @@ t_LTE = r"<="
 t_GTE = r">="
 t_LBRACKET = r"\["
 t_RBRACKET = r"\]"
+t_QMARK = r"\?"
 # End of stuf we added
 
 def t_IDENT( t ):
@@ -293,6 +297,9 @@ def p_cdr(p):
 def p_cons(p):
     "expr : CONS LPAREN expr COMMA expr RPAREN"
     p[0] = ListCons(p[3], p[5])
+def p_isnull(p):
+    "expr : ISNULL QMARK expr"
+    p[0] = IsNull(p[3])
 # End of stuff we added
 
 
@@ -563,6 +570,29 @@ def test_parser( arg=sys.argv ) :
     assert P.nameTable["x"] == [2, 10]
     assert P.nameTable["y"] == [10]
     assert P.nameTable["z"] == 10
+
+    data = """
+    x := [];
+    if null? x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    print P.nameTable
+    assert P.nameTable["s"] == 1
+
+    data = """
+    x := [2];
+    if null? x then
+        s := 1
+    else
+        s := 2
+    fi
+    """
+    yacc.parse( data )
+    assert P.nameTable["s"] == 2
 
 
     # Regular parse form stdin

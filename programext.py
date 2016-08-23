@@ -196,6 +196,14 @@ class ListCons(Expr):
         lst = self.value.eval(nt, ft)
         x = self.x.eval(nt, ft)
         return ListImpl(buff=[x] + lst).eval(nt, ft)
+
+class IsNull(Expr):
+    def __init__(self, x):
+        self.x = x
+
+    def eval(self, nt, ft):
+        lst = self.x.eval(nt, ft)
+        return not lst
 # End of stuff we added
 
 
