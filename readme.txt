@@ -35,3 +35,6 @@ Name Table
   fact -> 120 
   n -> -5 
 Function Table
+
+
+All unit tests are run when the interpreyer starts up.
