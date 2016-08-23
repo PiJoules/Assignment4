@@ -580,7 +580,6 @@ def test_parser( arg=sys.argv ) :
     fi
     """
     yacc.parse( data )
-    print P.nameTable
     assert P.nameTable["s"] == 1
 
     data = """
